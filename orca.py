@@ -52,29 +52,28 @@ class ORCA(FileIOCalculator):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
         p = self.parameters
         p.write(self.label + '.ase')
-        f = open(self.label + '.inp', 'w')
-        f.write(f"! {p.orcasimpleinput} \n")
-        f.write(f"{p.orcablocks} \n")
-        write_orca(f, atoms, p.charge, p.mult)
-        f.close()
+        with open(self.label + '.inp', 'w') as f:
+            f.write(f"! {p.orcasimpleinput} \n")
+            f.write(f"{p.orcablocks} \n")
+            write_orca(f, atoms, p.charge, p.mult)
 
     def read(self, label):
         FileIOCalculator.read(self, label)
         if not os.path.isfile(self.label + '.out'):
             raise ReadError
 
-        f = open(self.label + '.inp')
-        for line in f:
-            if line.startswith('geometry'):
-                break
-        symbols = []
-        positions = []
-        for line in f:
-            if line.startswith('end'):
-                break
-            words = line.split()
-            symbols.append(words[0])
-            positions.append([float(word) for word in words[1:]])
+        with open(self.label + '.inp') as f:
+            for line in f:
+                if line.startswith('geometry'):
+                    break
+            symbols = []
+            positions = []
+            for line in f:
+                if line.startswith('end'):
+                    break
+                words = line.split()
+                symbols.append(words[0])
+                positions.append([float(word) for word in words[1:]])
 
         self.parameters = Parameters.read(self.label + '.ase')
         self.read_results()
@@ -86,7 +85,8 @@ class ORCA(FileIOCalculator):
 
     def read_energy(self):
         """Read Energy from ORCA output file."""
-        text = open(self.label + '.out', 'r').read()
+        with open(self.label + '.out', 'r') as f:
+            text = f.read()
         lines = iter(text.split('\n'))
         # Energy:
         estring = 'FINAL SINGLE POINT ENERGY'
@@ -98,9 +98,8 @@ class ORCA(FileIOCalculator):
 
     def read_forces(self):
         """Read Forces from ORCA output file."""
-        file = open('orca.engrad', 'r')
-        lines = file.readlines()
-        file.close()
+        with open(f'{self.label}.engrad', 'r') as file:
+            lines = file.readlines()
         getgrad = "no"
         gradients = []
         tempgrad = []
