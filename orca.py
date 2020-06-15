@@ -9,13 +9,11 @@ This allows for more flexible use of any ORCA method or keyword available in ORC
 instead of hardcoding stuff.
 """
 import os
-import numpy as np
 
-from warnings import warn
-from ase.atoms import Atoms
-from ase.units import Hartree, Bohr
-from ase.io.orca import write_orca
+import numpy as np
 from ase.calculators.calculator import FileIOCalculator, Parameters, ReadError
+from ase.io.orca import write_orca
+from ase.units import Hartree, Bohr
 
 
 class KPoint:
@@ -34,7 +32,7 @@ class ORCA(FileIOCalculator):
         task='gradient',
         orcasimpleinput='PBE def2-SVP',
         orcablocks='%scf maxiter 200 end',
-        )  
+    )
 
     def __init__(self, restart=None, ignore_bad_restart_file=False,
                  label='orca', atoms=None, **kwargs):
@@ -47,15 +45,14 @@ class ORCA(FileIOCalculator):
         if changed_parameters:
             self.reset()
 
-
     def write_input(self, atoms, properties=None, system_changes=None):
         FileIOCalculator.write_input(self, atoms, properties, system_changes)
         p = self.parameters
         p.write(self.label + '.ase')
         f = open(self.label + '.inp', 'w')
-        f.write("! tightscf engrad %s \n" % p.orcasimpleinput);
+        f.write("! tightscf engrad %s \n" % p.orcasimpleinput)
         f.write("%s \n" % p.orcablocks)
-        write_orca(f,atoms,p.charge,p.mult)
+        write_orca(f, atoms, p.charge, p.mult)
         f.close()
 
     def read(self, label):
@@ -101,17 +98,19 @@ class ORCA(FileIOCalculator):
         file = open('orca.engrad', 'r')
         lines = file.readlines()
         file.close()
-        getgrad="no"
+        getgrad = "no"
         for i, line in enumerate(lines):
             if line.find('# The current gradient') >= 0:
-                getgrad="yes";gradients = [];tempgrad=[];continue
-            if getgrad=="yes" and "#" not in line:
-                grad=line.split()[-1]
+                getgrad = "yes"
+                gradients = []
+                tempgrad = []
+                continue
+            if getgrad == "yes" and "#" not in line:
+                grad = line.split()[-1]
                 tempgrad.append(float(grad))
-                if len(tempgrad)==3:
+                if len(tempgrad) == 3:
                     gradients.append(tempgrad)
-                    tempgrad=[]
+                    tempgrad = []
             if '# The at' in line:
-                getgrad="no"
+                getgrad = "no"
         self.results['forces'] = -np.array(gradients) * Hartree / Bohr
-
