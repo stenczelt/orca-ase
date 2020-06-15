@@ -39,6 +39,9 @@ class ORCA(FileIOCalculator):
         """Construct ORCA-calculator object."""
         FileIOCalculator.__init__(self, restart, ignore_bad_restart_file,
                                   label, atoms, **kwargs)
+        # customizing the orca command to use
+        if 'orca_command' in kwargs:
+            self.command = f'{str(kwargs.get("orca_command"))} PREFIX.inp > PREFIX.out'
 
     def set(self, **kwargs):
         changed_parameters = FileIOCalculator.set(self, **kwargs)
@@ -50,8 +53,8 @@ class ORCA(FileIOCalculator):
         p = self.parameters
         p.write(self.label + '.ase')
         f = open(self.label + '.inp', 'w')
-        f.write("! tightscf engrad %s \n" % p.orcasimpleinput)
-        f.write("%s \n" % p.orcablocks)
+        f.write(f"! {p.orcasimpleinput} \n")
+        f.write(f"{p.orcablocks} \n")
         write_orca(f, atoms, p.charge, p.mult)
         f.close()
 
@@ -99,6 +102,8 @@ class ORCA(FileIOCalculator):
         lines = file.readlines()
         file.close()
         getgrad = "no"
+        gradients = []
+        tempgrad = []
         for i, line in enumerate(lines):
             if line.find('# The current gradient') >= 0:
                 getgrad = "yes"
