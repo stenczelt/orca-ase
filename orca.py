@@ -102,21 +102,21 @@ class ORCA(FileIOCalculator):
         """Read Forces from ORCA output file."""
         with open(f'{self.label}.engrad', 'r') as file:
             lines = file.readlines()
-        getgrad = "no"
+        getgrad = False
         gradients = []
         tempgrad = []
         for i, line in enumerate(lines):
             if line.find('# The current gradient') >= 0:
-                getgrad = "yes"
+                getgrad = True
                 gradients = []
                 tempgrad = []
                 continue
-            if getgrad == "yes" and "#" not in line:
+            if getgrad and "#" not in line:
                 grad = line.split()[-1]
                 tempgrad.append(float(grad))
                 if len(tempgrad) == 3:
                     gradients.append(tempgrad)
                     tempgrad = []
             if '# The at' in line:
-                getgrad = "no"
+                getgrad = False
         self.results['forces'] = -np.array(gradients) * Hartree / Bohr
