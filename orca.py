@@ -90,11 +90,13 @@ class ORCA(FileIOCalculator):
         lines = iter(text.split('\n'))
         # Energy:
         estring = 'FINAL SINGLE POINT ENERGY'
+        energy = None
         for line in lines:
             if estring in line:
                 energy = float(line.split()[-1])
                 break
-        self.results['energy'] = energy * Hartree
+        if energy is not None:
+            self.results['energy'] = energy * Hartree
 
     def read_forces(self):
         """Read Forces from ORCA output file."""
